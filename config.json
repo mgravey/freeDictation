@@ -1,0 +1,9 @@
+{
+    "preferred_microphones": [
+        "Yeti X",
+        "HD Pro Webcam C920",
+        "MacBook Pro Microphone"
+    ],
+    "preferred_model": "medium.en",
+    "preferred_language": "en"
+}
