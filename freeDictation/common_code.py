@@ -1,3 +1,5 @@
+# common_code.py
+
 import warnings
 warnings.filterwarnings(
     "ignore",
@@ -16,6 +18,8 @@ import soundfile as sf
 from pynput import keyboard
 from pynput.keyboard import Controller, Key
 import time
+
+
 
 # Define flagList for emojis
 flagList = {
@@ -121,7 +125,6 @@ flagList = {
     'Sundanese': '🇮🇩',
     'Cantonese': '🇭🇰'
 }
-
 # Define supported languages
 supported_languages_multilingual = {"Auto-Detect": None} | {v.capitalize(): k for k, v in whisper.tokenizer.LANGUAGES.items()}
 supported_languages_english_only = {"English": "en"}
@@ -171,10 +174,18 @@ class FreeDictationAppBase:
         self.recording = False
         self.audio_data = []
         self.keyboard_controller = Controller()
-        self.load_model()
+
+        # Initialize self.languages based on the preferred model
+        if self.MODEL_NAME.endswith('.en'):
+            self.languages = supported_languages_english_only
+        else:
+            self.languages = supported_languages_multilingual
+
         self.input_devices = self.get_input_devices()
         preferred_mics = self.config.get("preferred_microphones", [])
         self.select_preferred_microphone(preferred_mics)
+        # Create an event to signal when the model is loaded
+        self.model_loaded_event = threading.Event()
 
     def load_model(self):
         print(f"Loading model '{self.MODEL_NAME}'...")
@@ -186,9 +197,12 @@ class FreeDictationAppBase:
                 self.languages = supported_languages_english_only
             else:
                 self.languages = supported_languages_multilingual
-            self.update_languages_menu()  # Call method to update the language menu
+            # Signal that the model has been loaded
+            self.model_loaded_event.set()
         except Exception as e:
             print(f"Error loading model '{self.MODEL_NAME}': {e}")
+            self.model_loaded_event.set()  # Prevent hanging if loading fails
+
     def update_languages_menu(self):
         pass  # To be implemented in platform-specific subclasses
 
@@ -214,7 +228,6 @@ class FreeDictationAppBase:
                 # If system default not found, select the first available device
                 self.INPUT_DEVICE_INDEX = next(iter(self.input_devices))
                 print(f"Default input device selected: {self.input_devices[self.INPUT_DEVICE_INDEX]['name']}")
-
 
     def start_recording(self):
         if not self.recording:
@@ -252,28 +265,28 @@ class FreeDictationAppBase:
 
     def transcribe_audio(self):
         if self.audio_data:
+            # Wait for model to be loaded
+            self.model_loaded_event.wait()
+            if self.model is None:
+                print("Model failed to load. Cannot transcribe.")
+                self.update_icon("idle")
+                return
             # Combine the audio data into a single NumPy array
             audio_np = np.concatenate(self.audio_data, axis=0)
-
             # Save the audio to a temporary WAV file
             with tempfile.NamedTemporaryFile(suffix=".wav") as tmpfile:
                 sf.write(tmpfile.name, audio_np, 16000, format='WAV', subtype='PCM_16')
-
                 # Transcribe with forced language or auto-detect
                 transcribe_options = {}
                 if self.selected_language and self.selected_language != "Auto-Detect":
                     transcribe_options['language'] = self.selected_language
                 transcribe_options["fp16"] = False
-
                 result = self.model.transcribe(tmpfile.name, **transcribe_options)
                 text = result['text'].strip()
-
                 # Insert the transcribed text into the active window
                 self.insert_text(text)
                 print(f"Transcribed Text: {text}")
-
         self.update_icon("idle")  # Update icon if applicable
-
 
     def insert_text(self, text):
         # Simulate typing the text into the active window
@@ -315,7 +328,7 @@ class FreeDictationAppBase:
             self.MODEL_NAME = model_name
             self.config["preferred_model"] = self.MODEL_NAME
             save_config(self.config)
-            self.load_model()
+            threading.Thread(target=self.load_model).start()
 
     def select_language(self, language_name):
         self.selected_language = self.languages.get(language_name)

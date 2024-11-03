@@ -1,3 +1,5 @@
+# platform_mac.py
+
 from .common_code import FreeDictationAppBase, get_available_models, flagList, CONFIG_PATH
 import rumps
 import threading
@@ -17,7 +19,6 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
             "Microphone",
             None,  # Separator
             "Model",
-            "Language",
             None,  # Separator
         ]
 
@@ -45,12 +46,16 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
             self.menu["Model"].add(item)
         self.update_model_checkmarks()
 
+        # Add 'Language' menu
+        self.menu.add(rumps.MenuItem("Language"))
+        self.menu["Language"].add(rumps.separator) 
+        self.update_languages_menu()
 
-        # Add Quit menu item
-        #self.menu["Quit"].set_callback(rumps.quit_application)
-        self.update_device_checkmarks()
-
+        # Add 'Open Config File' menu item after 'Language'
         self.menu.insert_after('Language', rumps.MenuItem('Open Config File', callback=self.open_config_file))
+
+        # Load the model after menus are initialized
+        threading.Thread(target=self.load_model).start()
 
     def run(self, *args, **kwargs):
         # Set the activation policy after NSApplication has been initialized
@@ -72,8 +77,6 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
     def on_select_model(self, sender):
         self.select_model(sender.model_name)
         self.update_model_checkmarks()
-        # Load the new model in a separate thread
-        threading.Thread(target=self.load_model).start()
 
     def update_model_checkmarks(self):
         for item in self.model_menu_items:
@@ -85,12 +88,17 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
 
     def update_language_checkmarks(self):
         for item in self.language_menu_items:
-            item.state = 1 if item.language == self.selected_language else 0
+            item.state = 1 if item.language == self.config["preferred_language"] else 0
 
     def update_languages_menu(self):
+        # Ensure 'Language' menu exists
+        if "Language" not in self.menu:
+            self.menu.add(rumps.MenuItem("Language"))
+
         # Clear old language menu items
         self.menu["Language"].clear()
         self.language_menu_items = []
+
         for name, code in self.languages.items():
             flag = flagList.get(name, '🌐')
             item = rumps.MenuItem(f"{flag} {name}", callback=self.on_select_language)
