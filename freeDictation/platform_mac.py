@@ -1,8 +1,10 @@
-from common_code import FreeDictationAppBase, get_available_models, flagList
+from .common_code import FreeDictationAppBase, get_available_models, flagList, CONFIG_PATH
 import rumps
 import threading
 from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
 import Quartz
+import subprocess
+import os
 
 class FreeDictationApp(FreeDictationAppBase, rumps.App):
     def __init__(self):
@@ -46,8 +48,9 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
 
         # Add Quit menu item
         #self.menu["Quit"].set_callback(rumps.quit_application)
-
         self.update_device_checkmarks()
+
+        self.menu.insert_after('Language', rumps.MenuItem('Open Config File', callback=self.open_config_file))
 
     def run(self, *args, **kwargs):
         # Set the activation policy after NSApplication has been initialized
@@ -96,7 +99,6 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
             self.menu["Language"].add(item)
         self.update_language_checkmarks()
 
-
     def update_icon(self, status):
         # Update the menu bar icon based on status
         if status == "idle":
@@ -107,6 +109,14 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
             self.title = "💭"
         else:
             self.title = "❓"
+
+    def open_config_file(self, _):
+        # Use subprocess to open the config file with the default editor
+        config_path = os.path.abspath(CONFIG_PATH)
+        try:
+            subprocess.call(['open', config_path])
+        except Exception as e:
+            print(f"Failed to open config file: {e}")
 
     # Key event handling using Quartz
     def run_event_loop(self):

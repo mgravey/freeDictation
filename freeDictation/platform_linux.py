@@ -1,4 +1,4 @@
-from common_code import FreeDictationAppBase, get_available_models
+from .common_code import FreeDictationAppBase, get_available_models
 import threading
 import pystray
 from PIL import Image, ImageDraw

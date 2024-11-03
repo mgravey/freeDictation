@@ -1,3 +1,10 @@
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    category=FutureWarning,
+    message=r"You are using `torch.load` with `weights_only=False`.*"
+)
+
 import sounddevice as sd
 import numpy as np
 import threading
@@ -9,7 +16,6 @@ import soundfile as sf
 from pynput import keyboard
 from pynput.keyboard import Controller, Key
 import time
-
 
 # Define flagList for emojis
 flagList = {
@@ -125,6 +131,12 @@ CONFIG_PATH = "config.json"
 
 # Load configuration file or use default settings
 def load_config():
+    default_config = {
+        "preferred_microphones": [],
+        "preferred_model": "base",
+        "preferred_language": "Auto-Detect"
+    }
+
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, 'r') as config_file:
@@ -132,18 +144,11 @@ def load_config():
         except json.JSONDecodeError as e:
             print(f"Warning: Failed to parse config file '{CONFIG_PATH}': {e}")
             print("Using default configuration.")
-            config = {
-                "preferred_microphones": [],
-                "preferred_model": "base",
-                "preferred_language": "Auto-Detect"
-            }
+            config = default_config
     else:
-        # Default config if no config file exists
-        config = {
-            "preferred_microphones": [],
-            "preferred_model": "base",
-            "preferred_language": "Auto-Detect"
-        }
+        # Config file does not exist, create it with default settings
+        config = default_config
+        save_config(config)
     return config
 
 # Save configuration to file
