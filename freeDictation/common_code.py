@@ -310,6 +310,7 @@ class FreeDictationAppBase:
         for idx, device in enumerate(devices):
             if device['max_input_channels'] > 0:
                 input_devices[idx] = device
+                input_devices[idx]['name']=input_devices[idx]['name'].split(":")[0]
         return input_devices
 
     # Abstract methods to be implemented in platform-specific subclasses
