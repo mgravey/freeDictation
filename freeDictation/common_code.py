@@ -190,17 +190,21 @@ class FreeDictationAppBase:
     def load_model(self):
         print(f"Loading model '{self.MODEL_NAME}'...")
         try:
+            self.update_icon("loading")
             self.model = whisper.load_model(self.MODEL_NAME)
             print(f"Model '{self.MODEL_NAME}' loaded successfully.")
+            self.update_icon("idle")
             # Update language menu based on model
             if self.MODEL_NAME.endswith('.en'):
                 self.languages = supported_languages_english_only
             else:
                 self.languages = supported_languages_multilingual
+            self.update_languages_menu()
             # Signal that the model has been loaded
             self.model_loaded_event.set()
         except Exception as e:
             print(f"Error loading model '{self.MODEL_NAME}': {e}")
+            self.update_icon("error")
             self.model_loaded_event.set()  # Prevent hanging if loading fails
 
     def update_languages_menu(self):
