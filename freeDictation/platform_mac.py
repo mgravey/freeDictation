@@ -115,6 +115,10 @@ class FreeDictationApp(FreeDictationAppBase, rumps.App):
             self.title = "👂"
         elif status == "transcribing":
             self.title = "💭"
+        elif status == "error":
+            self.title = "🛑"
+        elif status == "loading":
+            self.title = "⏳"
         else:
             self.title = "❓"
 
