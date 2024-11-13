@@ -130,7 +130,7 @@ supported_languages_multilingual = {"Auto-Detect": None} | {v.capitalize(): k fo
 supported_languages_english_only = {"English": "en"}
 
 # Path to the configuration file
-CONFIG_PATH = "config.json"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
 
 # Load configuration file or use default settings
 def load_config():
