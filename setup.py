@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'freeDictation = freeDictation.main:main',
+            'freeDictation = freeDictation.__main__:main',
         ],
     },
     classifiers=[
