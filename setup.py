@@ -20,7 +20,7 @@ setup(
         # Mac-specific dependencies
         'rumps; platform_system == "Darwin"',
         'pyobjc-framework-Quartz; platform_system == "Darwin"',
-        'pyobjc-framework-AppKit; platform_system == "Darwin"',
+        'pyobjc-core; platform_system == "Darwin"',
         # Windows and Linux dependencies
         'pystray; platform_system == "Windows" or platform_system == "Linux"',
         'pillow; platform_system == "Windows" or platform_system == "Linux"',
